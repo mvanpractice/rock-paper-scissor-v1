@@ -1,60 +1,58 @@
 
-/* === Variables === */
+/**
+ * Variables and DOM Queries
+ */
+const DOMQuery = {
+    gamePanelContainer: document.body.querySelector('.game-panel'),
+    completedGamesDisplay: document.body.querySelector('#completed-games'),
+    pendingGamesDisplay: document.body.querySelector('#pending-games'),
+    winRateDisplay: document.body.querySelector('#win-rate'),
+    totalWinsDisplay: document.body.querySelector('#total-wins')
+};
 
-/* === DOM Queries === */
-
-const gamePanelContainer = document.body.querySelector('.game-panel');
-const completedGamesDisplay = document.body.querySelector('#completed-games');
-const pendingGamesDisplay = document.body.querySelector('#pending-games');
-const winRateDisplay = document.body.querySelector('#win-rate');
-const totalWinsDisplay = document.body.querySelector('#total-wins');
-
-/* === Global Function Calls === */
+/**
+ * Global Function Calls
+ */
 displayMidSection();
 showGameRecord('completed');
 showGameRecord('pending');
 showWinRate();
 
-/* === Functions === */
+/**
+ * Functions
+ */
 
+/**
+ * @param {string} gameStatus 
+ * @returns {Array} - Local storage or set default []
+ */
 function getGameHistory(gameStatus) {
-    // My first try and catch block hehe
     try {
-
-        const localStorageKey = gameStatus === 'pending' 
-        ? 'pendingGameHistory' 
-        : 'completedGameHistory';
+        const localStorageKey = gameStatus === 'pending' ? 'pendingGameHistory' : 'completedGameHistory';
 
         const rawGameHistory = localStorage.getItem(localStorageKey);
 
         return rawGameHistory ? JSON.parse(rawGameHistory) : [];
 
     } catch (error) {
-        
         console.log('Check localStorage data you are accessing. Something is wrong with it!', error);
-        return []; // Fallback value in case localStorage returns invalid JSON
-
+        return [];
     }
-
 }
 
 function showWinRate() {
-
     const gameHistory = getGameHistory('completed');
+    const totalHumanWins = gameHistory.filter((gameRecord) => {
+        return typeof gameRecord === 'object' && gameRecord?.gameWinner === 'human';
+    });
 
-    const getHumanWins = gameHistory
-        .filter(
-            gameRecord => gameRecord.gameWinner && gameRecord.gameWinner === 'human'
-        );
+    const totalWins = totalHumanWins.length;
+    const totalGames = gameHistory.length;
 
-    totalWinsDisplay.textContent = parseInt(getHumanWins.length);
+    const winRate = totalGames !== 0 ? totalWins / totalGames * 100 : 0; 
 
-    const winRate = gameHistory.length !== 0
-        ? getHumanWins.length / gameHistory.length * 100
-        : 0; 
-
-    winRateDisplay.textContent = winRate.toFixed(2) + '%';
-
+    DOMQuery.totalWinsDisplay.textContent = totalWins; 
+    DOMQuery.winRateDisplay.textContent = winRate.toFixed(2) + '%';
 }
 
 /**
@@ -68,8 +66,8 @@ function showGameRecord(gameStatus) {
 
     // Map game status with respective display element
     const gameRecordDisplay = {
-        completed: completedGamesDisplay,
-        pending: pendingGamesDisplay
+        completed: DOMQuery.completedGamesDisplay,
+        pending: DOMQuery.pendingGamesDisplay
     };
 
     const displayElement = gameRecordDisplay[gameStatus];
@@ -82,25 +80,17 @@ function showGameRecord(gameStatus) {
 
 }
 
-// Generate random computer pick
 function getComputerPick() {
-    
     const options = ['rock', 'paper', 'scissors'];
-
     const randomPick = Math.floor(Math.random() * options.length);
-
     const result = options[randomPick];
 
     return result.charAt(0).toUpperCase() + result.slice(1);
-
 }
 
-// Create a loading element
 function createLoadingDots() {
-
     const div = document.createElement('div');
     div.classList.add('loading');
-
     div.textContent = 'Starting Game';
 
     const span = document.createElement('span');
@@ -111,18 +101,15 @@ function createLoadingDots() {
     return div;
 }
 
-// Create a spinner element
 function createSpinnerEffect() {
-
     const span = document.createElement('span');
     span.classList.add('spinner');
-    return span;
 
+    return span;
 }
 
 function displayMidSection() {
-
-    const midSection = gamePanelContainer.querySelector('.mid');
+    const midSection = DOMQuery.gamePanelContainer.querySelector('.mid');
 
     midSection.innerHTML = '';
 
@@ -149,9 +136,8 @@ function displayMidSection() {
     return midSection;
 }
 
-// Display the component to play the game
 function displaySelectionComponent() {
-    const midContainer = gamePanelContainer.querySelector('.mid');
+    const midContainer = DOMQuery.gamePanelContainer.querySelector('.mid');
 
     const selectionContainer = document.createElement('div');
     selectionContainer.classList.add('selection');
@@ -219,12 +205,9 @@ function displaySelectionComponent() {
 
 // Display the bottom section
 function displayBottomSection() {
-
-    // Container
     const div = document.createElement('div');
     div.classList.add('bot');
 
-    // Game winner display
     const h4 = document.createElement('h4');
     h4.innerHTML = `Game Winner: <span id="game-winner"></span>`;
 
@@ -237,7 +220,6 @@ function displayBottomSection() {
     div.append(h4, button);
 
     return div;
-
 }
 
 // Not yet final, just for the sake of the counts to work
@@ -297,10 +279,10 @@ function getClickedElement(e) {
         // My first descturturing ahahaha
         const {humanPicking, computerPicking} = roundPickings;
 
-        const yourScoreDisplay = gamePanelContainer.querySelector('#your-score');
-        const computerScoreDisplay = gamePanelContainer.querySelector('#computer-score');
-        const currentRoundDisplay = gamePanelContainer.querySelector('#current-round');
-        const roundWinnerDisplay = gamePanelContainer.querySelector('#round-winner');
+        const yourScoreDisplay = DOMQuery.gamePanelContainer.querySelector('#your-score');
+        const computerScoreDisplay = DOMQuery.gamePanelContainer.querySelector('#computer-score');
+        const currentRoundDisplay = DOMQuery.gamePanelContainer.querySelector('#current-round');
+        const roundWinnerDisplay = DOMQuery.gamePanelContainer.querySelector('#round-winner');
         
         const resultCombo = {
             RP: 'computer',
@@ -356,8 +338,8 @@ function getClickedElement(e) {
                 break;
         }
 
-        const midSection = gamePanelContainer.querySelector('.mid');
-        const botSection = gamePanelContainer.querySelector('.bot');
+        const midSection = DOMQuery.gamePanelContainer.querySelector('.mid');
+        const botSection = DOMQuery.gamePanelContainer.querySelector('.bot');
         const picksSection = midSection.querySelector('.picks');
 
         // Disable selection buttons to avoid clicks
@@ -426,7 +408,7 @@ function getClickedElement(e) {
 
                 }
 
-                gamePanelContainer.removeChild(botSection);
+                DOMQuery.gamePanelContainer.removeChild(botSection);
 
                 // Reset to avoid persisting in-memory value
                 gameStarted = false;
@@ -575,8 +557,8 @@ function savePendingGame(pendingMatch, currentGameId) {
 // Triggers showing the picks and return selections as obj
 function showPicks(clickedElem) {
 
-    const youPickedDisplay = gamePanelContainer.querySelector('#you-picked');
-    const computerPickedDisplay = gamePanelContainer.querySelector('#computer-picked');
+    const youPickedDisplay = DOMQuery.gamePanelContainer.querySelector('#you-picked');
+    const computerPickedDisplay = DOMQuery.gamePanelContainer.querySelector('#computer-picked');
     const computerPick = getComputerPick();
     const showSpinner = createSpinnerEffect();
     const parentOfSpinner = computerPickedDisplay.parentNode;
@@ -721,7 +703,7 @@ function renderBottomSection() {
     const botSection = displayBottomSection();
     
     // Append to the game-panel
-    gamePanelContainer.appendChild(botSection);
+    DOMQuery.gamePanelContainer.appendChild(botSection);
 
 }
 
@@ -729,7 +711,7 @@ function renderSelection() {
 
     let countDown = 3;
     
-    const midSection = gamePanelContainer.querySelector('.mid');
+    const midSection = DOMQuery.gamePanelContainer.querySelector('.mid');
 
     // Clear the section to remove new entry while game is starting
     midSection.innerHTML = '';
@@ -802,4 +784,4 @@ function removeUnloadWarning() {
 /* === Event Listeners === */
 
 // Bind click event listener to the game-panel container
-gamePanelContainer.addEventListener('click', getClickedElement);
+DOMQuery.gamePanelContainer.addEventListener('click', getClickedElement);
