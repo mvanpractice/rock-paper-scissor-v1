@@ -260,7 +260,7 @@ function getClickedElement(e) {
                 
                 gameStarted = true;
                 totalRoundEntered = isValid.value;
-                gameId = Math.floor(Math.random() * 100); // To be continued, fix for better random id
+                gameId = Math.floor(Math.random() * 1000); // To be continued, fix for better random id
 
             }
 
