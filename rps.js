@@ -2,13 +2,28 @@
 /**
  * Variables and DOM Queries
  */
-const DOMQuery = {
+
+// READ_ONLY
+const DOMQuery = Object.freeze({
     gamePanelContainer: document.body.querySelector('.game-panel'),
     completedGamesDisplay: document.body.querySelector('#completed-games'),
     pendingGamesDisplay: document.body.querySelector('#pending-games'),
     winRateDisplay: document.body.querySelector('#win-rate'),
     totalWinsDisplay: document.body.querySelector('#total-wins')
-};
+});
+
+// READ_ONLY
+const resultCombo = Object.freeze({
+    RP: 'computer',
+    RS: 'human',
+    RR: 'tie',
+    PR: 'human',
+    PS: 'computer',
+    PP: 'tie',
+    SR: 'computer',
+    SP: 'human',
+    SS: 'tie'
+});
 
 /**
  * Global Function Calls
@@ -265,228 +280,27 @@ function getClickedElement(e) {
             }
 
         }
-
     }
 
     // Rock, Paper, Scissors click handler
     if (clickedNode.closest('button') && ['rock', 'paper', 'scissors'].includes(clickedNode.id)) {
-
-        // If any of the 3 btns is clicked, listens for unload
-        enableUnloadWarning();
-        
-        // Triggers showing the picks and return selections as obj
-        const roundPickings = showPicks(clickedNode);
-        // My first descturturing ahahaha
-        const {humanPicking, computerPicking} = roundPickings;
-
-        const yourScoreDisplay = DOMQuery.gamePanelContainer.querySelector('#your-score');
-        const computerScoreDisplay = DOMQuery.gamePanelContainer.querySelector('#computer-score');
-        const currentRoundDisplay = DOMQuery.gamePanelContainer.querySelector('#current-round');
-        const roundWinnerDisplay = DOMQuery.gamePanelContainer.querySelector('#round-winner');
-        
-        const resultCombo = {
-            RP: 'computer',
-            RS: 'human',
-            RR: 'tie',
-            PR: 'human',
-            PS: 'computer',
-            PP: 'tie',
-            SR: 'computer',
-            SP: 'human',
-            SS: 'tie'
-        };
-
-        const picking = humanPicking.charAt(0) + computerPicking.charAt(0);
-        
-        if (!picking in resultCombo) {
-
-            return alert('You picked or computer picked something out of bounds!');
-
-        }
-        // This feels nonesense here but I will just go with this ahaha
-        if (gameStarted === false || totalRoundEntered === 0) {
-            return alert('Game has not started yet or no rounds entered.');
-        }
-
-        switch (resultCombo[picking]) {
-            case 'human':
-                
-                yourScoreCount++;
-                roundCount++;
-                yourScoreDisplay.textContent = yourScoreCount;
-                currentRoundDisplay.textContent = roundCount;
-                roundWinnerDisplay.textContent = 'You Win!';
-
-                break;
-        
-            case 'computer':
-                
-                computerScoreCount++;
-                roundCount++;
-                computerScoreDisplay.textContent = computerScoreCount;
-                currentRoundDisplay.textContent = roundCount;
-                roundWinnerDisplay.textContent = 'You Lost!';
-
-                break;
-            
-            case 'tie':
-                
-                roundCount++;
-                currentRoundDisplay.textContent = roundCount;
-                roundWinnerDisplay.textContent = 'TIE!';
-
-                break;
-        }
-
-        const midSection = DOMQuery.gamePanelContainer.querySelector('.mid');
-        const botSection = DOMQuery.gamePanelContainer.querySelector('.bot');
-        const picksSection = midSection.querySelector('.picks');
-
-        // Disable selection buttons to avoid clicks
-        const selectionBtns = midSection.querySelectorAll('BUTTON');
-        selectionBtns.forEach(btn => {
-            btn.disabled = true;
-            btn.classList.toggle('btn-disabled');
-        });
-
-        // Creates matchResult record
-        const matchResult = {
-            humanScore: yourScoreCount, 
-            computerScore: computerScoreCount,
-            numberOfRounds: totalRoundEntered,
-            currentRound: roundCount,
-            datePlayed: new Date().toLocaleDateString(),
-            gameId: gameId
-        };
-        
-        if (roundCount < totalRoundEntered) {
-            // Set pending as default
-            matchResult.matchStatus = 'pending';
-
-            // Save as pending
-            savePendingGame(matchResult, gameId); // To be continued. Not true random
-        }
-    
-        // Check if round is done
-        if (roundCount === totalRoundEntered) {
-
-            setTimeout(() => {
-
-                // To be continued....
-                if (yourScoreCount > computerScoreCount) {
-                    picksSection.innerHTML = `
-                        <div>
-                            <h3>You WON this game!</h3>
-                            <button type="button" id="start-new-game" class="btn-darkblue">Start New Game</button>
-                            <p>Game record saved!</p>
-                        </div>
-                    `;
-                    picksSection.classList.toggle('win');
-                    gameWinner = 'human';
-
-                } else if (yourScoreCount === computerScoreCount) {
-                    picksSection.innerHTML = `
-                        <div>
-                            <h3>It was a TIE!</h3>
-                            <button type="button" id="start-new-game" class="btn-darkblue">Start New Game</button>
-                            <p>Game record saved!</p>
-                        </div>
-                    `;
-                    picksSection.classList.toggle('tie');
-                    gameWinner = 'tie';
-
-                } else {
-                    picksSection.innerHTML = `
-                        <div>
-                            <h3>You LOST this game!</h3>
-                            <button type="button" id="start-new-game" class="btn-darkblue">Start New Game</button>
-                            <p>Game record saved!</p>
-                        </div>
-                    `;
-                    picksSection.classList.toggle('loss');
-                    gameWinner = 'computer';
-
-                }
-
-                DOMQuery.gamePanelContainer.removeChild(botSection);
-
-                // Reset to avoid persisting in-memory value
-                gameStarted = false;
-                totalRoundEntered = 0;
-                yourScoreCount = 0;
-                computerScoreCount = 0;
-                roundCount = 0;
-
-                // Saves to localStorage
-                matchResult.matchStatus = 'completed';
-                matchResult.gameWinner = gameWinner;
-                saveCompletedGame(matchResult);
-
-                removeUnloadWarning();
-
-            }, 800);
-            
-        }
-
-        // Allows click again
-        setTimeout(() => {
-            selectionBtns.forEach(btn => {
-                btn.disabled = false;
-                btn.classList.toggle('btn-disabled');
-            });
-        }, 700);
-
+        handleRPSClicks(clickedNode);
     }
 
     // Handle click for Quit Game btn
     if (clickedNode.closest('button') && clickedNode.id === 'quit-game') {
-
         console.log(clickedNode); // To be continued / almost doneeee
-
     }
 
     // Handle click for Start New Game btn 
     if (clickedNode.closest('button') && clickedNode.id === 'start-new-game') {
-        
         displayMidSection();
-
     }
 
     // Handle click for clearing entire game record
-    // To be continued, has bug. When game is in progress and you click clear game
-    // In-memory still retains some variable
     if (clickedNode.closest('button') && clickedNode.id === 'clear-game') {
-
-        const completedGameHistory = getGameHistory('completed');
-        const pendingGameHistory = getGameHistory('pending');
-
-        if (completedGameHistory.length || pendingGameHistory.length) {
-
-            const confirmDelete = confirm('Are you sure you want to delete all game records?');
-
-            if (confirmDelete) {
-                localStorage.removeItem('pendingGameHistory');
-                localStorage.removeItem('completedGameHistory');
-
-                showGameRecord('pending');
-                showGameRecord('completed');
-                showWinRate();
-                // Also resets gameID
-                gameId = 0;
-                displayMidSection();
-
-            }
-        } else {
-
-            clickedNode.textContent = 'No history to delete!';
-            setTimeout(() => {
-                clickedNode.textContent = 'Clear Game History';
-            }, 1000);
-
-        }
-
+        clearGameHistory(clickedNode);
     }
-
 }
 
 /*
@@ -495,19 +309,17 @@ function getClickedElement(e) {
 * That save, clear and retrieve gameResult
 */
 function saveCompletedGame(matchResult) {
-    // Retrieves fresh record
     const completedGameHistory = getGameHistory('completed');
-
-    const findPending = getGameHistory('pending');
+    const pendingGameHistory = getGameHistory('pending');
 
     completedGameHistory.push(matchResult);
     localStorage.setItem('completedGameHistory', JSON.stringify(completedGameHistory));
 
-    const currentSavedPending = findPending.findIndex(item => item.gameId === matchResult.gameId);
+    const currentSavedPending = pendingGameHistory.findIndex(item => item.gameId === matchResult.gameId);
 
-    findPending.splice(currentSavedPending, 1);
+    pendingGameHistory.splice(currentSavedPending, 1);
 
-    localStorage.setItem('pendingGameHistory', JSON.stringify(findPending));
+    localStorage.setItem('pendingGameHistory', JSON.stringify(pendingGameHistory));
 
     gameId = 0;
 
@@ -517,9 +329,8 @@ function saveCompletedGame(matchResult) {
 
 }
 
+// To be continued, has bugs when only 1 round is entered. It deletes pending records
 function savePendingGame(pendingMatch, currentGameId) {
-
-    // Retrieves fresh record
     const pendingGameHistory = getGameHistory('pending');
 
     pendingGameHistory.push(pendingMatch);
@@ -554,14 +365,179 @@ function savePendingGame(pendingMatch, currentGameId) {
 
 }
 
-// Triggers showing the picks and return selections as obj
-function showPicks(clickedElem) {
+function clearGameHistory(clickedNode) {
+    const completedGameHistory = getGameHistory('completed');
+    const pendingGameHistory = getGameHistory('pending');
 
+    if (completedGameHistory.length || pendingGameHistory.length) {
+
+        const confirmDelete = confirm('Are you sure you want to delete all game records?');
+
+        if (confirmDelete) {
+            localStorage.removeItem('pendingGameHistory');
+            localStorage.removeItem('completedGameHistory');
+
+            showGameRecord('pending');
+            showGameRecord('completed');
+            showWinRate();
+            // Also reset
+            gameId = 0;
+            gameStarted = false;
+            totalRoundEntered = 0;
+            yourScoreCount = 0;
+            computerScoreCount = 0;
+            roundCount = 0;
+            displayMidSection();
+
+        }
+    } else {
+
+        clickedNode.textContent = 'No history to delete!';
+        setTimeout(() => {
+            clickedNode.textContent = 'Clear Game History';
+        }, 1000);
+
+    }
+}
+
+function handleRPSClicks(clickedNode) {
+    enableUnloadWarning();
+    
+    const roundPickings = showPicks(clickedNode);
+
+    const {humanPicking, computerPicking} = roundPickings;
+
+    const yourScoreDisplay = DOMQuery.gamePanelContainer.querySelector('#your-score');
+    const computerScoreDisplay = DOMQuery.gamePanelContainer.querySelector('#computer-score');
+    const currentRoundDisplay = DOMQuery.gamePanelContainer.querySelector('#current-round');
+    const roundWinnerDisplay = DOMQuery.gamePanelContainer.querySelector('#round-winner');
+
+    const picking = humanPicking.charAt(0) + computerPicking.charAt(0);
+    
+    if (!picking in resultCombo) {
+        return alert('You picked or computer picked something out of bounds!');
+    }
+    
+    if (gameStarted === false || totalRoundEntered === 0) {
+        return alert('Game has not started yet or no rounds entered.');
+    }
+
+    switch (resultCombo[picking]) {
+        case 'human':
+            yourScoreCount++;
+            roundCount++;
+            yourScoreDisplay.textContent = yourScoreCount;
+            currentRoundDisplay.textContent = roundCount;
+            roundWinnerDisplay.textContent = 'You Win!';
+            break;
+    
+        case 'computer':
+            computerScoreCount++;
+            roundCount++;
+            computerScoreDisplay.textContent = computerScoreCount;
+            currentRoundDisplay.textContent = roundCount;
+            roundWinnerDisplay.textContent = 'You Lost!';
+            break;
+        
+        case 'tie':
+            roundCount++;
+            currentRoundDisplay.textContent = roundCount;
+            roundWinnerDisplay.textContent = 'TIE!';
+            break;
+    }
+
+    const midSection = DOMQuery.gamePanelContainer.querySelector('.mid');
+    const botSection = DOMQuery.gamePanelContainer.querySelector('.bot');
+    const picksSection = midSection.querySelector('.picks');
+    const selectionBtns = midSection.querySelectorAll('BUTTON');
+    
+    // Temporarily disable RPS btns
+    selectionBtns.forEach(btn => {
+        btn.disabled = true;
+        btn.classList.toggle('btn-disabled');
+    });
+
+    // Creates matchResult record
+    const matchResult = {
+        humanScore: yourScoreCount, 
+        computerScore: computerScoreCount,
+        numberOfRounds: totalRoundEntered,
+        currentRound: roundCount,
+        datePlayed: new Date().toLocaleDateString(),
+        gameId: gameId
+    };
+    
+    if (roundCount < totalRoundEntered) {
+        matchResult.matchStatus = 'pending';
+
+        savePendingGame(matchResult, gameId); // To be continued. Not true random
+    }
+
+    // Check if round is done
+    if (roundCount === totalRoundEntered) {
+        const showGameResult = (result) => {
+            return (`
+                <div>
+                    ${result === 'Tie' ? `<h3>It was a ${result}!</h3>` : `<h3>You ${result} this game!</h3>`}
+                    <button type="button" id="start-new-game" class="btn-darkblue">Start New Game</button>
+                    <p>Game record saved!</p>
+                </div>
+            `);
+        }
+
+        setTimeout(() => {
+            if (yourScoreCount > computerScoreCount) {
+                picksSection.innerHTML = showGameResult('Won');
+                picksSection.classList.toggle('win');
+                gameWinner = 'human';
+
+            } else if (yourScoreCount === computerScoreCount) {
+                picksSection.innerHTML = showGameResult('Tie');
+                picksSection.classList.toggle('tie');
+                gameWinner = 'tie';
+
+            } else {
+                picksSection.innerHTML = showGameResult('Lost');
+                picksSection.classList.toggle('loss');
+                gameWinner = 'computer';
+
+            }
+
+            DOMQuery.gamePanelContainer.removeChild(botSection);
+
+            // Reset to avoid persisting in-memory value
+            gameStarted = false;
+            totalRoundEntered = 0;
+            yourScoreCount = 0;
+            computerScoreCount = 0;
+            roundCount = 0;
+
+            // Save to localStorage
+            matchResult.matchStatus = 'completed';
+            matchResult.gameWinner = gameWinner;
+            saveCompletedGame(matchResult);
+
+            removeUnloadWarning();
+        }, 800);
+        
+    }
+
+    // Allows RPS clicks again
+    setTimeout(() => {
+        selectionBtns.forEach(btn => {
+            btn.disabled = false;
+            btn.classList.toggle('btn-disabled');
+        });
+    }, 700);
+}
+
+function showPicks(clickedElem) {
     const youPickedDisplay = DOMQuery.gamePanelContainer.querySelector('#you-picked');
     const computerPickedDisplay = DOMQuery.gamePanelContainer.querySelector('#computer-picked');
     const computerPick = getComputerPick();
     const showSpinner = createSpinnerEffect();
     const parentOfSpinner = computerPickedDisplay.parentNode;
+
     parentOfSpinner.style.display = 'flex';
 
     switch (clickedElem.id) {
@@ -572,12 +548,10 @@ function showPicks(clickedElem) {
             parentOfSpinner.appendChild(showSpinner);
 
             setTimeout(() => {
-
-            // parentOfSpinner.style.removeProperty('display'); Only removes the display
-            parentOfSpinner.removeAttribute('style'); // Using for now since there is no other styles in the node
+            parentOfSpinner.removeAttribute('style');
             parentOfSpinner.removeChild(showSpinner);
-            computerPickedDisplay.textContent = computerPick;
             parentOfSpinner.appendChild(computerPickedDisplay);
+            computerPickedDisplay.textContent = computerPick;
 
             }, 400);
 
@@ -590,7 +564,6 @@ function showPicks(clickedElem) {
             parentOfSpinner.appendChild(showSpinner);
 
             setTimeout(() => {
-
             parentOfSpinner.removeAttribute('style');
             parentOfSpinner.removeChild(showSpinner);
             parentOfSpinner.appendChild(computerPickedDisplay);
@@ -607,7 +580,6 @@ function showPicks(clickedElem) {
             parentOfSpinner.appendChild(showSpinner);
 
             setTimeout(() => {
-
             parentOfSpinner.removeAttribute('style');
             parentOfSpinner.removeChild(showSpinner);
             parentOfSpinner.appendChild(computerPickedDisplay);
@@ -618,7 +590,6 @@ function showPicks(clickedElem) {
         break;
     }
 
-    // Returning the selction for round winner decision
     return {
         humanPicking: youPickedDisplay.textContent,
         computerPicking: computerPick
